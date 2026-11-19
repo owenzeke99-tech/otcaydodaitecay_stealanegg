@@ -1,0 +1,545 @@
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+
+-- Key and Script Configuration
+local CorrectKey = "ChilliHubV8KeyHskwkwhejLaljwkwwjlKanwkwkwkeop"
+local GetKeyLink = "https://link4m.net/f2LbIb"
+local ScriptURL = "https://raw.githubusercontent.com/napun87/stealanegg/refs/heads/main/chilli.otcaydodaiNoKey3.7.lua"
+
+local KEY_TTL_SECONDS = 24 * 60 * 60
+local SAVE_FILE_NAME = "ChilliHubV8_SessionCache.json"
+
+-- Silent 24h Key Cache Helpers (No 24h text displayed on UI)
+local function ReadSavedKeyRecord()
+	if type(isfile) == "function" and type(readfile) == "function" then
+		local ok, exists = pcall(isfile, SAVE_FILE_NAME)
+		if ok and exists then
+			local rOk, content = pcall(readfile, SAVE_FILE_NAME)
+			if rOk and type(content) == "string" and #content > 0 then
+				local dOk, decoded = pcall(function()
+					return HttpService:JSONDecode(content)
+				end)
+				if dOk and type(decoded) == "table" then
+					return decoded
+				end
+			end
+		end
+	end
+
+	local sharedCache = rawget(shared, "_ChilliHubV8_KeyCache")
+	if type(sharedCache) == "table" then
+		return sharedCache
+	end
+	return nil
+end
+
+local function SaveKeyRecordFor24h(keyValue)
+	local record = {
+		key = keyValue,
+		expires = os.time() + KEY_TTL_SECONDS
+	}
+
+	if type(writefile) == "function" then
+		local eOk, encoded = pcall(function()
+			return HttpService:JSONEncode(record)
+		end)
+		if eOk and type(encoded) == "string" then
+			pcall(writefile, SAVE_FILE_NAME, encoded)
+		end
+	end
+
+	rawset(shared, "_ChilliHubV8_KeyCache", record)
+end
+
+local function HasValidSavedKey()
+	local record = ReadSavedKeyRecord()
+	if type(record) ~= "table" then
+		return false
+	end
+	if record.key ~= CorrectKey then
+		return false
+	end
+	if type(record.expires) ~= "number" or os.time() >= record.expires then
+		return false
+	end
+	return true
+end
+
+local function LaunchMainScript()
+	loadstring(game:HttpGet(ScriptURL))()
+end
+
+-- If a valid key is still within its 24h window, launch directly
+if HasValidSavedKey() then
+	LaunchMainScript()
+	return
+end
+
+-- Remove existing GUI if already present
+local targetParent = pcall(function() return CoreGui.Name end) and CoreGui or Players.LocalPlayer:WaitForChild("PlayerGui")
+if targetParent:FindFirstChild("ChilliHubV8_KeySystem") then
+	targetParent.ChilliHubV8_KeySystem:Destroy()
+end
+
+-- Initialize ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ChilliHubV8_KeySystem"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = targetParent
+
+-- Main Frame (Red Dominant + Dark Translucent Glass)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.Size = UDim2.new(0, 388, 0, 266)
+MainFrame.BackgroundColor3 = Color3.fromRGB(16, 6, 8)
+MainFrame.BackgroundTransparency = 0.48
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.ClipsDescendants = false
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 16)
+MainCorner.Parent = MainFrame
+
+local BgGradient = Instance.new("UIGradient")
+BgGradient.Parent = MainFrame
+BgGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(195, 22, 38)),
+	ColorSequenceKeypoint.new(0.52, Color3.fromRGB(62, 9, 14)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(14, 14, 16))
+})
+BgGradient.Rotation = 135
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Parent = MainFrame
+MainStroke.Color = Color3.fromRGB(235, 38, 58)
+MainStroke.Thickness = 1.6
+MainStroke.Transparency = 0.2
+
+local Shadow = Instance.new("ImageLabel")
+Shadow.Name = "Shadow"
+Shadow.Parent = MainFrame
+Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+Shadow.BackgroundTransparency = 1
+Shadow.Position = UDim2.new(0.5, 0, 0.5, 2)
+Shadow.Size = UDim2.new(1, 42, 1, 42)
+Shadow.ZIndex = -1
+Shadow.Image = "rbxassetid://6014261993"
+Shadow.ImageColor3 = Color3.fromRGB(12, 6, 8)
+Shadow.ImageTransparency = 0.5
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+
+-- Centered Main Title: CHILLI HUB V8
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Parent = MainFrame
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0, 42, 0, 15)
+TitleLabel.Size = UDim2.new(1, -84, 0, 28)
+TitleLabel.Font = Enum.Font.FredokaOne
+TitleLabel.Text = "CHILLI HUB V8"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 65, 82)
+TitleLabel.TextSize = 22
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Centered Subtitle
+local SubTitle = Instance.new("TextLabel")
+SubTitle.Parent = MainFrame
+SubTitle.BackgroundTransparency = 1
+SubTitle.Position = UDim2.new(0, 22, 0, 43)
+SubTitle.Size = UDim2.new(1, -44, 0, 18)
+SubTitle.Font = Enum.Font.GothamMedium
+SubTitle.Text = "Verify your key to unlock the script"
+SubTitle.TextColor3 = Color3.fromRGB(215, 200, 202)
+SubTitle.TextSize = 12
+SubTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Red Divider Line
+local Divider = Instance.new("Frame")
+Divider.Parent = MainFrame
+Divider.BackgroundColor3 = Color3.fromRGB(220, 35, 55)
+Divider.BackgroundTransparency = 0.45
+Divider.BorderSizePixel = 0
+Divider.Position = UDim2.new(0, 22, 0, 68)
+Divider.Size = UDim2.new(1, -44, 0, 1)
+
+-- Close Button (X)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Parent = MainFrame
+CloseBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 20)
+CloseBtn.BackgroundTransparency = 0.45
+CloseBtn.Position = UDim2.new(1, -42, 0, 15)
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 110, 125)
+CloseBtn.TextSize = 13
+CloseBtn.AutoButtonColor = false
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+
+CloseBtn.MouseEnter:Connect(function()
+	TweenService:Create(CloseBtn, TweenInfo.new(0.18), {
+		BackgroundTransparency = 0.2,
+		BackgroundColor3 = Color3.fromRGB(220, 30, 50),
+		TextColor3 = Color3.fromRGB(255, 255, 255)
+	}):Play()
+end)
+CloseBtn.MouseLeave:Connect(function()
+	TweenService:Create(CloseBtn, TweenInfo.new(0.18), {
+		BackgroundTransparency = 0.45,
+		BackgroundColor3 = Color3.fromRGB(18, 18, 20),
+		TextColor3 = Color3.fromRGB(255, 110, 125)
+	}):Play()
+end)
+CloseBtn.MouseButton1Click:Connect(function()
+	TweenService:Create(MainFrame, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		Size = UDim2.new(0, 320, 0, 180),
+		BackgroundTransparency = 1
+	}):Play()
+	task.wait(0.22)
+	ScreenGui:Destroy()
+end)
+
+-- Centered Key Input Container
+local InputContainer = Instance.new("Frame")
+InputContainer.Parent = MainFrame
+InputContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+InputContainer.BackgroundTransparency = 0.52
+InputContainer.Position = UDim2.new(0, 22, 0, 80)
+InputContainer.Size = UDim2.new(1, -44, 0, 42)
+Instance.new("UICorner", InputContainer).CornerRadius = UDim.new(0, 11)
+
+local InputStroke = Instance.new("UIStroke")
+InputStroke.Parent = InputContainer
+InputStroke.Color = Color3.fromRGB(210, 35, 52)
+InputStroke.Thickness = 1.3
+InputStroke.Transparency = 0.3
+
+local KeyBox = Instance.new("TextBox")
+KeyBox.Parent = InputContainer
+KeyBox.BackgroundTransparency = 1
+KeyBox.Position = UDim2.new(0, 14, 0, 0)
+KeyBox.Size = UDim2.new(1, -28, 1, 0)
+KeyBox.Font = Enum.Font.GothamMedium
+KeyBox.PlaceholderText = "Enter your key here..."
+KeyBox.PlaceholderColor3 = Color3.fromRGB(165, 155, 158)
+KeyBox.Text = ""
+KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyBox.TextSize = 13
+KeyBox.ClearTextOnFocus = false
+KeyBox.TextXAlignment = Enum.TextXAlignment.Center
+
+KeyBox.Focused:Connect(function()
+	TweenService:Create(InputStroke, TweenInfo.new(0.2), {
+		Color = Color3.fromRGB(255, 65, 82),
+		Thickness = 1.6,
+		Transparency = 0.05
+	}):Play()
+end)
+KeyBox.FocusLost:Connect(function()
+	TweenService:Create(InputStroke, TweenInfo.new(0.2), {
+		Color = Color3.fromRGB(210, 35, 52),
+		Thickness = 1.3,
+		Transparency = 0.3
+	}):Play()
+end)
+
+-- ==========================================
+-- IN-MENU MODERN NOTICE CARD + CLEAN TIMER BAR
+-- ==========================================
+local NoticeCard = Instance.new("Frame")
+NoticeCard.Name = "NoticeCard"
+NoticeCard.Parent = MainFrame
+NoticeCard.AnchorPoint = Vector2.new(0.5, 0)
+NoticeCard.Position = UDim2.new(0.5, 0, 0, 130)
+NoticeCard.Size = UDim2.new(1, -44, 0, 52)
+NoticeCard.BackgroundColor3 = Color3.fromRGB(18, 12, 14)
+NoticeCard.BackgroundTransparency = 1
+NoticeCard.BorderSizePixel = 0
+NoticeCard.ClipsDescendants = true
+Instance.new("UICorner", NoticeCard).CornerRadius = UDim.new(0, 11)
+
+local NoticeStroke = Instance.new("UIStroke")
+NoticeStroke.Parent = NoticeCard
+NoticeStroke.Color = Color3.fromRGB(255, 65, 82)
+NoticeStroke.Thickness = 1.3
+NoticeStroke.Transparency = 1
+
+local NoticeBadge = Instance.new("Frame")
+NoticeBadge.Parent = NoticeCard
+NoticeBadge.AnchorPoint = Vector2.new(0, 0.5)
+NoticeBadge.Position = UDim2.new(0, 10, 0.5, -1)
+NoticeBadge.Size = UDim2.new(0, 26, 0, 26)
+NoticeBadge.BackgroundColor3 = Color3.fromRGB(220, 25, 45)
+NoticeBadge.BackgroundTransparency = 1
+NoticeBadge.BorderSizePixel = 0
+Instance.new("UICorner", NoticeBadge).CornerRadius = UDim.new(1, 0)
+
+local NoticeIcon = Instance.new("TextLabel")
+NoticeIcon.Parent = NoticeBadge
+NoticeIcon.BackgroundTransparency = 1
+NoticeIcon.Size = UDim2.new(1, 0, 1, 0)
+NoticeIcon.Font = Enum.Font.FredokaOne
+NoticeIcon.Text = "!"
+NoticeIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoticeIcon.TextTransparency = 1
+NoticeIcon.TextSize = 14
+
+local NoticeTitle = Instance.new("TextLabel")
+NoticeTitle.Parent = NoticeCard
+NoticeTitle.BackgroundTransparency = 1
+NoticeTitle.Position = UDim2.new(0, 44, 0, 7)
+NoticeTitle.Size = UDim2.new(1, -54, 0, 16)
+NoticeTitle.Font = Enum.Font.MontserratBold
+NoticeTitle.Text = ""
+NoticeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoticeTitle.TextTransparency = 1
+NoticeTitle.TextSize = 12
+NoticeTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local NoticeSub = Instance.new("TextLabel")
+NoticeSub.Parent = NoticeCard
+NoticeSub.BackgroundTransparency = 1
+NoticeSub.Position = UDim2.new(0, 44, 0, 24)
+NoticeSub.Size = UDim2.new(1, -54, 0, 15)
+NoticeSub.Font = Enum.Font.GothamMedium
+NoticeSub.Text = ""
+NoticeSub.TextColor3 = Color3.fromRGB(220, 200, 204)
+NoticeSub.TextTransparency = 1
+NoticeSub.TextSize = 11
+NoticeSub.TextXAlignment = Enum.TextXAlignment.Left
+
+local TimerTrack = Instance.new("Frame")
+TimerTrack.Name = "TimerTrack"
+TimerTrack.Parent = NoticeCard
+TimerTrack.AnchorPoint = Vector2.new(0.5, 1)
+TimerTrack.Position = UDim2.new(0.5, 0, 1, -4)
+TimerTrack.Size = UDim2.new(1, -18, 0, 3)
+TimerTrack.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TimerTrack.BackgroundTransparency = 1
+TimerTrack.BorderSizePixel = 0
+Instance.new("UICorner", TimerTrack).CornerRadius = UDim.new(1, 0)
+
+local NoticeTimer = Instance.new("Frame")
+NoticeTimer.Name = "NoticeTimer"
+NoticeTimer.Parent = TimerTrack
+NoticeTimer.AnchorPoint = Vector2.new(0.5, 0.5)
+NoticeTimer.Position = UDim2.new(0.5, 0, 0.5, 0)
+NoticeTimer.Size = UDim2.new(1, 0, 1, 0)
+NoticeTimer.BackgroundColor3 = Color3.fromRGB(255, 65, 82)
+NoticeTimer.BackgroundTransparency = 1
+NoticeTimer.BorderSizePixel = 0
+Instance.new("UICorner", NoticeTimer).CornerRadius = UDim.new(1, 0)
+
+local noticeToken = 0
+local activeDrainTween = nil
+
+local function ShowInMenuNotice(titleText, subText, kind)
+	noticeToken += 1
+	local currentToken = noticeToken
+
+	if activeDrainTween then
+		activeDrainTween:Cancel()
+		activeDrainTween = nil
+	end
+
+	local bgColor, strokeColor, badgeColor, iconText, titleColor, targetBgTransp
+	if kind == "error" then
+		bgColor = Color3.fromRGB(135, 14, 26)
+		strokeColor = Color3.fromRGB(255, 85, 102)
+		badgeColor = Color3.fromRGB(235, 32, 52)
+		iconText = "!"
+		titleColor = Color3.fromRGB(255, 240, 242)
+		targetBgTransp = 0.34
+	elseif kind == "success" then
+		bgColor = Color3.fromRGB(18, 96, 52)
+		strokeColor = Color3.fromRGB(95, 240, 148)
+		badgeColor = Color3.fromRGB(35, 185, 95)
+		iconText = "✓"
+		titleColor = Color3.fromRGB(235, 255, 242)
+		targetBgTransp = 0.34
+	else
+		bgColor = Color3.fromRGB(22, 20, 24)
+		strokeColor = Color3.fromRGB(255, 130, 145)
+		badgeColor = Color3.fromRGB(210, 45, 65)
+		iconText = "i"
+		titleColor = Color3.fromRGB(255, 235, 238)
+		targetBgTransp = 0.38
+	end
+
+	NoticeCard.BackgroundColor3 = bgColor
+	NoticeStroke.Color = strokeColor
+	NoticeBadge.BackgroundColor3 = badgeColor
+	NoticeIcon.Text = iconText
+	NoticeTitle.Text = titleText
+	NoticeTitle.TextColor3 = titleColor
+	NoticeSub.Text = subText
+	NoticeTimer.BackgroundColor3 = strokeColor
+
+	NoticeCard.Position = UDim2.new(0.5, 0, 0, 136)
+	NoticeCard.BackgroundTransparency = 1
+	NoticeStroke.Transparency = 1
+	NoticeBadge.BackgroundTransparency = 1
+	NoticeIcon.TextTransparency = 1
+	NoticeTitle.TextTransparency = 1
+	NoticeSub.TextTransparency = 1
+	TimerTrack.BackgroundTransparency = 1
+	NoticeTimer.Size = UDim2.new(1, 0, 1, 0)
+	NoticeTimer.BackgroundTransparency = 1
+
+	TweenService:Create(NoticeCard, TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+		Position = UDim2.new(0.5, 0, 0, 130),
+		BackgroundTransparency = targetBgTransp
+	}):Play()
+	TweenService:Create(NoticeStroke, TweenInfo.new(0.22), {Transparency = 0.12}):Play()
+	TweenService:Create(NoticeBadge, TweenInfo.new(0.22), {BackgroundTransparency = 0.15}):Play()
+	TweenService:Create(NoticeIcon, TweenInfo.new(0.22), {TextTransparency = 0}):Play()
+	TweenService:Create(NoticeTitle, TweenInfo.new(0.22), {TextTransparency = 0}):Play()
+	TweenService:Create(NoticeSub, TweenInfo.new(0.22), {TextTransparency = 0}):Play()
+	TweenService:Create(TimerTrack, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
+	TweenService:Create(NoticeTimer, TweenInfo.new(0.2), {BackgroundTransparency = 0.05}):Play()
+
+	local duration = 3.0
+	activeDrainTween = TweenService:Create(NoticeTimer, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+		Size = UDim2.new(0, 0, 1, 0)
+	})
+	activeDrainTween:Play()
+
+	task.delay(duration, function()
+		if noticeToken ~= currentToken then return end
+		TweenService:Create(NoticeCard, TweenInfo.new(0.22), {BackgroundTransparency = 1}):Play()
+		TweenService:Create(NoticeStroke, TweenInfo.new(0.22), {Transparency = 1}):Play()
+		TweenService:Create(NoticeBadge, TweenInfo.new(0.22), {BackgroundTransparency = 1}):Play()
+		TweenService:Create(NoticeIcon, TweenInfo.new(0.22), {TextTransparency = 1}):Play()
+		TweenService:Create(NoticeTitle, TweenInfo.new(0.22), {TextTransparency = 1}):Play()
+		TweenService:Create(NoticeSub, TweenInfo.new(0.22), {TextTransparency = 1}):Play()
+		TweenService:Create(TimerTrack, TweenInfo.new(0.22), {BackgroundTransparency = 1}):Play()
+		TweenService:Create(NoticeTimer, TweenInfo.new(0.22), {BackgroundTransparency = 1}):Play()
+	end)
+end
+
+-- Modern Button Factory
+local function CreateActionButton(text, pos, size, isPrimary)
+	local Btn = Instance.new("TextButton")
+	Btn.Parent = MainFrame
+	Btn.Position = pos
+	Btn.Size = size
+	Btn.Font = Enum.Font.MontserratBold
+	Btn.Text = text
+	Btn.TextSize = 13
+	Btn.AutoButtonColor = false
+	Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 11)
+
+	local BtnStroke = Instance.new("UIStroke")
+	BtnStroke.Parent = Btn
+	BtnStroke.Thickness = 1.3
+
+	if isPrimary then
+		Btn.BackgroundColor3 = Color3.fromRGB(215, 26, 46)
+		Btn.BackgroundTransparency = 0.25
+		Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		BtnStroke.Color = Color3.fromRGB(255, 110, 125)
+		BtnStroke.Transparency = 0.2
+	else
+		Btn.BackgroundColor3 = Color3.fromRGB(16, 16, 20)
+		Btn.BackgroundTransparency = 0.48
+		Btn.TextColor3 = Color3.fromRGB(255, 140, 152)
+		BtnStroke.Color = Color3.fromRGB(215, 38, 56)
+		BtnStroke.Transparency = 0.3
+	end
+
+	Btn.MouseEnter:Connect(function()
+		TweenService:Create(Btn, TweenInfo.new(0.18), {
+			BackgroundTransparency = 0.1,
+			BackgroundColor3 = isPrimary and Color3.fromRGB(245, 42, 62) or Color3.fromRGB(32, 18, 22)
+		}):Play()
+	end)
+	Btn.MouseLeave:Connect(function()
+		TweenService:Create(Btn, TweenInfo.new(0.18), {
+			BackgroundTransparency = isPrimary and 0.25 or 0.48,
+			BackgroundColor3 = isPrimary and Color3.fromRGB(215, 26, 46) or Color3.fromRGB(16, 16, 20)
+		}):Play()
+	end)
+
+	return Btn
+end
+
+local CheckBtn = CreateActionButton("CHECK KEY", UDim2.new(0, 22, 0, 194), UDim2.new(0.5, -28, 0, 46), true)
+local GetKeyBtn = CreateActionButton("GET KEY", UDim2.new(0.5, 6, 0, 194), UDim2.new(0.5, -28, 0, 46), false)
+
+-- Smooth Damped Shake on Invalid Key
+local isShaking = false
+local function SmoothShake()
+	if isShaking then return end
+	isShaking = true
+
+	local basePos = MainFrame.Position
+	local steps = {-11, 11, -8, 8, -5, 5, -2, 2, 0}
+	local stepInfo = TweenInfo.new(0.042, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+	TweenService:Create(MainStroke, TweenInfo.new(0.14), {Color = Color3.fromRGB(255, 65, 82), Thickness = 2.4, Transparency = 0}):Play()
+	TweenService:Create(InputStroke, TweenInfo.new(0.14), {Color = Color3.fromRGB(255, 65, 82), Thickness = 1.8, Transparency = 0}):Play()
+
+	for _, offset in ipairs(steps) do
+		local tween = TweenService:Create(MainFrame, stepInfo, {
+			Position = UDim2.new(basePos.X.Scale, basePos.X.Offset + offset, basePos.Y.Scale, basePos.Y.Offset)
+		})
+		tween:Play()
+		tween.Completed:Wait()
+	end
+
+	TweenService:Create(MainStroke, TweenInfo.new(0.28), {Color = Color3.fromRGB(235, 38, 58), Thickness = 1.6, Transparency = 0.2}):Play()
+	TweenService:Create(InputStroke, TweenInfo.new(0.28), {Color = Color3.fromRGB(210, 35, 52), Thickness = 1.3, Transparency = 0.3}):Play()
+	isShaking = false
+end
+
+-- Key Verification Logic (Triggered ONLY when clicking CHECK KEY)
+local function VerifyKey()
+	local enteredKey = string.gsub(KeyBox.Text, "^%s*(.-)%s*$", "%1")
+
+	if enteredKey == CorrectKey then
+		SaveKeyRecordFor24h(enteredKey)
+		ShowInMenuNotice("Access Granted", "Key verified! Launching Chilli Hub V8...", "success")
+		TweenService:Create(MainStroke, TweenInfo.new(0.22), {Color = Color3.fromRGB(95, 240, 148)}):Play()
+
+		task.wait(0.75)
+		TweenService:Create(MainFrame, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Size = UDim2.new(0, 330, 0, 210),
+			BackgroundTransparency = 1
+		}):Play()
+		task.wait(0.24)
+		ScreenGui:Destroy()
+
+		LaunchMainScript()
+	else
+		ShowInMenuNotice("Invalid Key", "The key you entered is wrong. Try again.", "error")
+		KeyBox.Text = ""
+		task.spawn(SmoothShake)
+	end
+end
+
+GetKeyBtn.MouseButton1Click:Connect(function()
+	if setclipboard then
+		setclipboard(GetKeyLink)
+		ShowInMenuNotice("Link Copied", "Get-key link has been copied to clipboard.", "info")
+	else
+		ShowInMenuNotice("Clipboard Error", "Executor does not support clipboard copy.", "error")
+	end
+end)
+
+CheckBtn.MouseButton1Click:Connect(VerifyKey)
+
+-- Smooth Opening Animation
+MainFrame.Size = UDim2.new(0, 340, 0, 220)
+MainFrame.BackgroundTransparency = 1
+TweenService:Create(MainFrame, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	Size = UDim2.new(0, 388, 0, 266),
+	BackgroundTransparency = 0.48
+}):Play()
